@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新的隨機抽籤輪盤</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            color: #2d3a4b;
+        }
+        .result {
+            font-size: 32px;
+            margin-bottom: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 1px 2px 8px #fff8;
+        }
+        .input-container {
+            margin-bottom: 20px;
+            text-align: center;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px #b0c4de44;
+            padding: 24px 32px 10px 32px;
+            width: 370px;
+            margin-top: 30px;
+        }
+        .input-container input, .input-container textarea {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #b0c4de;
+        }
+        .input-container label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #185a9d;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            margin-top: 6px;
+        }
+        .checkbox-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+        }
+        .button {
+            background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            padding: 12px 28px;
+            font-size: 20px;
+            cursor: pointer;
+            margin: 10px 8px;
+            box-shadow: 0 2px 8px #185a9d33;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: background 0.3s, box-shadow 0.2s, transform 0.1s;
+        }
+        .button:hover {
+            background: linear-gradient(135deg, #185a9d 0%, #43cea2 100%);
+            box-shadow: 0 4px 16px #185a9d66;
+            transform: scale(1.04);
+        }
+        .canvas-container {
+            position: relative;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .pointer {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translate(-50%, 0) rotate(180deg);
+            width: 0;
+            height: 0;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-bottom: 40px solid #e74c3c;
+            filter: drop-shadow(0 2px 6px #e74c3c88);
+        }
+        #rouletteCanvas {
+            transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
+            background: radial-gradient(circle at 60% 40%, #fff 60%, #b0c4de 100%);
+            border-radius: 50%;
+            box-shadow: 0 4px 24px #185a9d33, 0 1.5px 0 #fff inset;
+            border: 6px solid #43cea2;
+        }
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #fff 60%, #b0c4de 100%);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #185a9d;
+            font-size: 30px;
+            box-shadow: 0 2px 8px #185a9d33;
+            border: 2px solid #43cea2;
+        }
+        .result-number {
+            font-size: 36px;
+            color: #e67e22;
+            margin-top: 36px;
+            font-weight: bold;
+            text-shadow: 0 2px 8px #fff8, 0 1px 0 #e67e2244;
+            letter-spacing: 2px;
+            min-height: 48px;
+            transition: color 0.3s, transform 0.3s;
+            animation: popResult 0.7s cubic-bezier(0.33, 1, 0.68, 1) 1;
+        }
+        @keyframes popResult {
+            0% { transform: scale(0.7); color: #fff; }
+            60% { transform: scale(1.15); color: #e67e22; }
+            100% { transform: scale(1); color: #e67e22; }
+        }
+    </style>
+</head>
+<body>
+    <div class="result">新的隨機抽籤輪盤</div>
+
+    <div class="input-container">
+        <label for="min_number">最小數字:</label>
+        <input type="number" id="min_number" placeholder="最小數字" required />
+
+        <label for="max_number">最大數字:</label>
+        <input type="number" id="max_number" placeholder="最大數字" required />
+
+        <label for="exclude_numbers">排除的數字 (用逗號分隔):</label>
+        <textarea id="exclude_numbers" rows="2" placeholder="例如: 2,5,8"></textarea>
+
+        <div class="checkbox-row">
+            <input type="checkbox" id="remove_duplicates">
+            <label for="remove_duplicates" style="margin: 0; font-weight: normal; color: #2d3a4b;">去除重複的數字</label>
+        </div>
+        <div class="button" onclick="generateWheel()">生成輪盤</div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="rouletteCanvas" width="300" height="300"></canvas>
+        <div class="pointer"></div>
+        <div class="center-circle">🎯</div>
+    </div>
+    <div class="button" onclick="spinWheel()">旋轉輪盤</div>
+    <div class="result-number" id="resultDisplay"></div>
+    <script>
+        let numbers = [];
+        let spinning = false;
+        function drawRouletteWheel(numbers) {
+            const canvas = document.getElementById('rouletteCanvas');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 140;
+            if (numbers.length === 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+            const angleStep = 2 * Math.PI / numbers.length;
+            // 馬卡龍色系
+            const colors = [
+                '#FFD6E0', '#FFECB3', '#B2EBF2', '#C8E6C9', '#FFF9C4', '#D1C4E9',
+                '#FFCCBC', '#B3E5FC', '#F8BBD0', '#DCEDC8', '#FFE0B2', '#E1BEE7'
+            ];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            numbers.forEach((number, index) => {
+                const startAngle = index * angleStep;
+                const endAngle = startAngle + angleStep;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.fillStyle = colors[index % colors.length];
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#fff';
+                ctx.stroke();
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + angleStep / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#666';
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText(number, radius - 20, 10);
+                ctx.restore();
+            });
+        }
+        function generateWheel() {
+            const minNumber = parseInt(document.getElementById('min_number').value);
+            const maxNumber = parseInt(document.getElementById('max_number').value);
+            let excludeNumbers = document.getElementById('exclude_numbers').value.split(',').map(num => num.trim());
+            const removeDuplicates = document.getElementById('remove_duplicates').checked;
+            numbers = [];
+            for (let i = minNumber; i <= maxNumber; i++) {
+                if (!excludeNumbers.includes(i.toString())) {
+                    numbers.push(i);
+                }
+            }
+            if (removeDuplicates) {
+                numbers = [...new Set(numbers)];
+            }
+            if (numbers.length === 0) {
+                alert("沒有有效的號碼生成！");
+                return;
+            }
+            drawRouletteWheel(numbers);
+            document.getElementById('resultDisplay').innerText = '';
+        }
+        function spinWheel() {
+            if (spinning) return;
+            if (numbers.length === 0) {
+                alert("請先生成輪盤！");
+                return;
+            }
+            spinning = true;
+            const canvas = document.getElementById('rouletteCanvas');
+            const anglePerSeg = 360 / numbers.length;
+            const randomTurns = 5 + Math.random() * 2;
+            const randomAngle = Math.random() * 360;
+            const finalAngle = 360 * randomTurns + randomAngle;
+            canvas.style.transition = 'transform 4s cubic-bezier(0.33, 1, 0.68, 1)';
+            canvas.style.transform = `rotate(${finalAngle}deg)`;
+            setTimeout(() => {
+                // canvas 0度為正右方，指針在正下方，需補正90度
+                const stoppedAngle = (360 - (finalAngle % 360) + 90) % 360;
+                let selectedIdx = Math.floor(stoppedAngle / anglePerSeg);
+                if (selectedIdx >= numbers.length) selectedIdx = 0;
+                document.getElementById('resultDisplay').innerText = `中獎號碼是：${numbers[selectedIdx]}`;
+                spinning = false;
+            }, 4000);
+        }
+        window.onload = function() {
+            drawRouletteWheel([]);
+        };
+    </script>
+</body>
+</html>

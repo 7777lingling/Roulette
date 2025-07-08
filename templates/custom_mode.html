@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自訂模式</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-top: 40px;
+            color: #2d3a4b;
+            letter-spacing: 2px;
+            text-shadow: 1px 2px 8px #fff8;
+        }
+        .option-list {
+            margin-bottom: 20px;
+            width: 370px;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #b0c4de44;
+            padding: 10px 12px;
+            transition: box-shadow 0.2s;
+        }
+        .option-item:hover {
+            box-shadow: 0 4px 16px #b0c4de88;
+        }
+        .option-item input[type="text"] {
+            width: 120px;
+            margin-right: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            border: 1px solid #b0c4de;
+            font-size: 16px;
+        }
+        .option-item input[type="number"] {
+            width: 60px;
+            margin-right: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            border: 1px solid #b0c4de;
+            font-size: 16px;
+        }
+        .option-item button {
+            background: linear-gradient(135deg, #ff5858 0%, #f09819 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 15px;
+            box-shadow: 0 2px 6px #f0981933;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .option-item button:hover {
+            background: linear-gradient(135deg, #f09819 0%, #ff5858 100%);
+            box-shadow: 0 4px 12px #f0981966;
+        }
+        .add-btn, .action-btn {
+            background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            padding: 12px 28px;
+            font-size: 20px;
+            cursor: pointer;
+            margin: 10px 8px;
+            box-shadow: 0 2px 8px #185a9d33;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: background 0.3s, box-shadow 0.2s, transform 0.1s;
+        }
+        .add-btn:hover, .action-btn:hover {
+            background: linear-gradient(135deg, #185a9d 0%, #43cea2 100%);
+            box-shadow: 0 4px 16px #185a9d66;
+            transform: scale(1.04);
+        }
+        .canvas-container {
+            position: relative;
+            margin-top: 30px;
+            margin-bottom: 10px;
+        }
+        .pointer {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translate(-50%, 0) rotate(180deg);
+            width: 0;
+            height: 0;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-bottom: 40px solid #e74c3c;
+            filter: drop-shadow(0 2px 6px #e74c3c88);
+        }
+        #rouletteCanvas {
+            transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
+            background: radial-gradient(circle at 60% 40%, #fff 60%, #b0c4de 100%);
+            border-radius: 50%;
+            box-shadow: 0 4px 24px #185a9d33, 0 1.5px 0 #fff inset;
+            border: 6px solid #43cea2;
+        }
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #fff 60%, #b0c4de 100%);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #185a9d;
+            font-size: 30px;
+            box-shadow: 0 2px 8px #185a9d33;
+            border: 2px solid #43cea2;
+        }
+        .result {
+            font-size: 36px;
+            color: #e67e22;
+            margin-top: 36px;
+            font-weight: bold;
+            text-shadow: 0 2px 8px #fff8, 0 1px 0 #e67e2244;
+            letter-spacing: 2px;
+            min-height: 48px;
+            transition: color 0.3s, transform 0.3s;
+            animation: popResult 0.7s cubic-bezier(0.33, 1, 0.68, 1) 1;
+        }
+        @keyframes popResult {
+            0% { transform: scale(0.7); color: #fff; }
+            60% { transform: scale(1.15); color: #e67e22; }
+            100% { transform: scale(1); color: #e67e22; }
+        }
+    </style>
+</head>
+<body>
+    <h1>自訂模式</h1>
+    <div class="option-list" id="optionList"></div>
+    <button class="add-btn" onclick="addOption()">新增選項</button>
+    <button class="action-btn" onclick="generateWheel()">生成輪盤</button>
+    <div class="canvas-container">
+        <canvas id="rouletteCanvas" width="350" height="350"></canvas>
+        <div class="pointer"></div>
+        <div class="center-circle">🎯</div>
+    </div>
+    <button class="action-btn" onclick="spinWheel()">旋轉輪盤</button>
+    <div class="result" id="resultDisplay"></div>
+    <script>
+        let options = [
+            { name: '蘋果', weight: 1 },
+            { name: '香蕉', weight: 1 },
+            { name: '橘子', weight: 1 }
+        ];
+        let wheelSegments = [];
+        let spinning = false;
+
+        function renderOptions() {
+            const list = document.getElementById('optionList');
+            list.innerHTML = '';
+            options.forEach((opt, idx) => {
+                const div = document.createElement('div');
+                div.className = 'option-item';
+                div.innerHTML = `
+                    <input type="text" value="${opt.name}" placeholder="選項名稱" onchange="updateOptionName(${idx}, this.value)">
+                    <input type="number" min="1" value="${opt.weight}" placeholder="權重" onchange="updateOptionWeight(${idx}, this.value)">
+                    <button onclick="removeOption(${idx})">刪除</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+        function addOption() {
+            options.push({ name: '', weight: 1 });
+            renderOptions();
+        }
+        function removeOption(idx) {
+            options.splice(idx, 1);
+            renderOptions();
+        }
+        function updateOptionName(idx, value) {
+            options[idx].name = value;
+        }
+        function updateOptionWeight(idx, value) {
+            let v = parseInt(value);
+            options[idx].weight = isNaN(v) || v < 1 ? 1 : v;
+            renderOptions();
+        }
+        function getWheelSegments() {
+            // 根據權重展開選項
+            let segs = [];
+            options.forEach(opt => {
+                if (opt.name.trim() && opt.weight > 0) {
+                    for (let i = 0; i < opt.weight; i++) {
+                        segs.push(opt.name);
+                    }
+                }
+            });
+            return segs;
+        }
+        function drawRouletteWheel(segments) {
+            const canvas = document.getElementById('rouletteCanvas');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 150;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (segments.length === 0) return;
+            const angleStep = 2 * Math.PI / segments.length;
+            // 馬卡龍色系
+            const colors = [
+                '#FFD6E0', // 粉紅
+                '#FFECB3', // 淡黃
+                '#B2EBF2', // 淡藍
+                '#C8E6C9', // 淡綠
+                '#FFF9C4', // 淡米
+                '#D1C4E9', // 淡紫
+                '#FFCCBC', // 淡橘
+                '#B3E5FC', // 淡天藍
+                '#F8BBD0', // 淡玫瑰
+                '#DCEDC8', // 淡青綠
+                '#FFE0B2', // 淡橙
+                '#E1BEE7'  // 淡紫紅
+            ];
+            segments.forEach((seg, idx) => {
+                const startAngle = idx * angleStep;
+                const endAngle = startAngle + angleStep;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.fillStyle = colors[idx % colors.length];
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#fff';
+                ctx.stroke();
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + angleStep / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#666';
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText(seg, radius - 20, 10);
+                ctx.restore();
+            });
+        }
+        function generateWheel() {
+            wheelSegments = getWheelSegments();
+            if (wheelSegments.length === 0) {
+                alert('請輸入至少一個有效選項！');
+                return;
+            }
+            drawRouletteWheel(wheelSegments);
+            document.getElementById('resultDisplay').innerText = '';
+        }
+        function spinWheel() {
+            if (spinning) return;
+            if (!wheelSegments || wheelSegments.length === 0) {
+                alert('請先生成輪盤！');
+                return;
+            }
+            spinning = true;
+            const canvas = document.getElementById('rouletteCanvas');
+            const anglePerSeg = 360 / wheelSegments.length;
+            const randomTurns = 5 + Math.random() * 2; // 至少5圈
+            // 隨機一個 0~360 的角度
+            const randomAngle = Math.random() * 360;
+            const finalAngle = 360 * randomTurns + randomAngle;
+            canvas.style.transition = 'transform 4s cubic-bezier(0.33, 1, 0.68, 1)';
+            canvas.style.transform = `rotate(${finalAngle}deg)`;
+            setTimeout(() => {
+                // 計算最終停下來的角度（0度為正上方，順時針），canvas 0度為正右方，需補正90度
+                const stoppedAngle = (360 - (finalAngle % 360) + 90) % 360; // 補正90度，讓正上方為0度
+                let selectedIdx = Math.floor(stoppedAngle / anglePerSeg);
+                // 防止剛好360度時超出index
+                if (selectedIdx >= wheelSegments.length) selectedIdx = 0;
+                document.getElementById('resultDisplay').innerText = `抽中：「${wheelSegments[selectedIdx]}」`;
+                spinning = false;
+            }, 4000);
+        }
+        window.onload = function() {
+            renderOptions();
+            drawRouletteWheel([]);
+        };
+    </script>
+</body>
+</html>
