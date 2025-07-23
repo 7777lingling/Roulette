@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to E:\Deploy\Roulette (handle robocopy exit code)
-        shell: pwsh
+        shell: powershell
         run: |
           $source = "$PWD"
           $target = "E:\Deploy\Roulette"
