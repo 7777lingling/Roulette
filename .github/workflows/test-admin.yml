@@ -2,7 +2,7 @@ name: Deploy Flask App to Local IIS Folder
 
 on:
   push:
-    branches: [main]  # 每次 push 到 main 就部署
+    branches: [main]
 
 jobs:
   deploy:
@@ -12,20 +12,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to E:\Deploy\Roulette (handle robocopy exit code)
+      - name: Deploy to E:\Deploy\Roulette (with web.config)
         shell: powershell
         run: |
           $source = "$PWD"
           $target = "E:\Deploy\Roulette"
           $excludeDirs = @(".git", ".github", "__pycache__")
-          $excludeFiles = @("*.pyc", "*.pyo") # web.config 也會被複製，所以不排除
+          $excludeFiles = @("*.pyc", "*.pyo")
 
           robocopy $source $target /MIR `
             /XD $excludeDirs `
             /XF $excludeFiles `
             /NFL /NDL /NJH /NJS
 
-          if ($LASTEXITCODE -gt 1) {
+          if ($LASTEXITCODE -ge 8) {
             Write-Error "❌ Robocopy failed with exit code $LASTEXITCODE"
             exit $LASTEXITCODE
           } else {
