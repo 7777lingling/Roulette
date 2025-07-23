@@ -18,7 +18,7 @@ jobs:
           $source = "$PWD"
           $target = "E:\Deploy\Roulette"
           $excludeDirs = @(".git", ".github", "__pycache__")
-          $excludeFiles = @("*.pyc", "*.pyo", "web.config")
+          $excludeFiles = @("*.pyc", "*.pyo") # web.config 也會被複製，所以不排除
 
           robocopy $source $target /MIR `
             /XD $excludeDirs `
