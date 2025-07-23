@@ -12,8 +12,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to E:\Deploy\Roulette (with web.config)
-        shell: pwsh
+      - name: Deploy to E:\Deploy\Roulette (handle robocopy exit code)
+        shell: powershell
         run: |
           $source = "$PWD"
           $target = "E:\Deploy\Roulette"
