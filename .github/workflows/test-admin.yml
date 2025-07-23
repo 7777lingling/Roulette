@@ -1,25 +1,22 @@
-name: Deploy to Local IIS
+name: Deploy Flask App to Local IIS Folder
 
 on:
   push:
     branches: [main]  # 每次 push 到 main 就部署
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: [self-hosted]
 
     steps:
-      - name: Checkout source
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET 6 SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '6.0.x'
-
-      - name: Publish Project
-        run: dotnet publish ./WS105/WS105.csproj -c Release -o ./publish
-
-      - name: Deploy to IIS (copy to E:\Deploy\Roulette)
+      - name: Deploy to E:\Deploy\Roulette (handle robocopy exit code)
+        shell: powershell
         run: |
-          robocopy ./publish "E:\Deploy\Roulette" /MIR /XD logs obj bin /NFL /NDL /NJH /NJS
+          robocopy . "E:\Deploy\Roulette" /MIR /XD .git .github __pycache__ /XF *.pyc *.pyo /NFL /NDL /NJH /NJS
+          if ($LASTEXITCODE -gt 1) {
+            Write-Error "Robocopy failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+          }
