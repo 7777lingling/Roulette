@@ -13,10 +13,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to E:\Deploy\Roulette (handle robocopy exit code)
-        shell: powershell
+        shell: pwsh
         run: |
-          robocopy . "E:\Deploy\Roulette" /MIR /XD .git .github __pycache__ /XF *.pyc *.pyo /NFL /NDL /NJH /NJS
+          $source = "$PWD"
+          $target = "E:\Deploy\Roulette"
+          $excludeDirs = @(".git", ".github", "__pycache__")
+          $excludeFiles = @("*.pyc", "*.pyo", "web.config")
+
+          robocopy $source $target /MIR `
+            /XD $excludeDirs `
+            /XF $excludeFiles `
+            /NFL /NDL /NJH /NJS
+
           if ($LASTEXITCODE -gt 1) {
-            Write-Error "Robocopy failed with exit code $LASTEXITCODE"
+            Write-Error "❌ Robocopy failed with exit code $LASTEXITCODE"
             exit $LASTEXITCODE
+          } else {
+            Write-Host "✅ Robocopy completed with exit code $LASTEXITCODE"
           }
