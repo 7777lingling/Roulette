@@ -1,15 +1,25 @@
-name: Admin Permission Test
+name: Deploy to Local IIS
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]  # 每次 push 到 main 就部署
 
 jobs:
-  test-admin:
+  build-and-deploy:
     runs-on: [self-hosted]
-    steps:
-      - name: Show current user
-        run: whoami /groups
 
-      - name: Try to run elevated command
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 6 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Publish Project
+        run: dotnet publish ./WS105/WS105.csproj -c Release -o ./publish
+
+      - name: Deploy to IIS (copy to E:\Deploy\Roulette)
         run: |
-          echo Hello from admin runner!
+          robocopy ./publish "E:\Deploy\Roulette" /MIR /XD logs obj bin /NFL /NDL /NJH /NJS
